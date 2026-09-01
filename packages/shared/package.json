@@ -1,0 +1,13 @@
+{
+  "name": "@quanlydaytro/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities and constants for QuanLyDayTro",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@quanlydaytro/frontend",
+  "version": "1.0.0",
+  "description": "Giao diện Quản lý Dãy trọ - Hiện đại, Tốc độ cao",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port 5173",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@quanlydaytro/shared": "*"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrọMaster - Hệ Thống Quản Lý Dãy Trọ & Thu Phí</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/src/styles/index.css">
+</head>
+<body>
+  <!-- TOP BLUE NAVBAR -->
+  <header class="top-navbar">
+    <div class="top-nav-left">
+      <button class="nav-toggle-btn" id="btn-toggle-sidebar" title="Mở rộng / Thu gọn menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="app-logo">
+        <div class="logo-box"><i class="fa-solid fa-building-user"></i></div>
+        <span class="app-name">TrọMaster Quản lý dãy trọ</span>
+      </div>
+    </div>
+
+    <div class="top-nav-center">
+      <div class="global-search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="global-search-input" placeholder="Tìm kiếm phòng, hợp đồng, hóa đơn, khách thuê..." />
+      </div>
+    </div>
+
+    <div class="top-nav-right">
+      <div class="pg-badge">
+        <span class="pg-indicator"></span> PostgreSQL: quan_ly_day_tro
+      </div>
+      <button class="top-icon-btn" title="Thông báo"><i class="fa-regular fa-bell"></i></button>
+      <button class="top-icon-btn" title="Trợ giúp"><i class="fa-regular fa-circle-question"></i></button>
+      <div class="user-avatar-circle" title="Tài khoản Quản trị">A</div>
+    </div>
+  </header>
+
+  <!-- BODY WORKSPACE WITH EXPANDABLE SIDEBAR + MASTER DETAIL -->
+  <div class="workspace-layout">
+    <!-- EXPANDABLE SIDEBAR -->
+    <aside class="slim-sidebar" id="sidebar">
+      <div class="slim-menu">
+        <button class="slim-item active" data-tab="hoa-don" title="Hóa đơn & Thu phí">
+          <i class="fa-solid fa-receipt"></i>
+          <span class="item-text">Hóa đơn & Thu phí</span>
+        </button>
+        <button class="slim-item" data-tab="so-do-phong" title="Sơ đồ phòng">
+          <i class="fa-solid fa-door-open"></i>
+          <span class="item-text">Sơ đồ phòng</span>
+        </button>
+        <button class="slim-item" data-tab="hop-dong" title="Hợp đồng thuê">
+          <i class="fa-solid fa-file-contract"></i>
+          <span class="item-text">Hợp đồng thuê</span>
+        </button>
+        <button class="slim-item" data-tab="dien-nuoc" title="Chốt số điện nước">
+          <i class="fa-solid fa-bolt"></i>
+          <span class="item-text">Chốt số điện nước</span>
+        </button>
+        <button class="slim-item" data-tab="day-tro" title="Danh sách dãy trọ">
+          <i class="fa-solid fa-city"></i>
+          <span class="item-text">Danh sách dãy trọ</span>
+        </button>
+        <button class="slim-item" data-tab="tai-san-sua-chua" title="Bảo trì & Tài sản">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+          <span class="item-text">Bảo trì & Tài sản</span>
+        </button>
+        <button class="slim-item" data-tab="dashboard" title="Tổng quan Dashboard">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span class="item-text">Báo cáo tổng quan</span>
+        </button>
+      </div>
+
+      <div class="slim-footer">
+        <button class="slim-item" title="Cài đặt hệ thống">
+          <i class="fa-solid fa-gear"></i>
+          <span class="item-text">Cài đặt hệ thống</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MASTER DETAIL SPLIT VIEW -->
+    <main class="master-detail-container">
+      <!-- LEFT MASTER LIST VIEW -->
+      <section class="master-panel" id="master-panel">
+        <!-- Master Header Toolbar -->
+        <div class="master-header">
+          <div class="master-title-group">
+            <h2 id="master-view-title">Hóa đơn</h2>
+            <span class="item-count-badge" id="master-item-count">0</span>
+          </div>
+
+          <div class="master-toolbar">
+            <button class="tool-btn icon-only" title="Thông tin" id="btn-info-toolbar"><i class="fa-solid fa-circle-info"></i></button>
+            <button class="btn btn-add-primary" id="btn-master-add"><i class="fa-solid fa-plus"></i> Thêm mới</button>
+            <button class="tool-btn icon-only" title="Bộ lọc" id="btn-filter-toolbar"><i class="fa-solid fa-filter"></i></button>
+            <button class="tool-btn icon-only" title="Chỉnh sửa hàng loạt"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button class="tool-btn icon-only" title="Chọn nhiều"><i class="fa-regular fa-square-check"></i></button>
+          </div>
+        </div>
+
+        <!-- Master Filter Bar -->
+        <div class="master-filter-bar" id="master-filter-bar">
+          <!-- Dynamic category chips / selects -->
+        </div>
+
+        <!-- Master Table View -->
+        <div class="master-table-wrapper" id="master-table-wrapper">
+          <!-- Rendered table dynamically -->
+        </div>
+      </section>
+
+      <!-- RIGHT DETAIL PANEL -->
+      <aside class="detail-panel" id="detail-panel">
+        <!-- Detail Header -->
+        <div class="detail-header">
+          <div class="detail-id-title" id="detail-header-id">#HD0000</div>
+          <div class="detail-actions">
+            <button class="detail-action-btn delete" id="btn-detail-delete" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
+            <button class="detail-action-btn edit" id="btn-detail-edit"><i class="fa-solid fa-pen"></i> Chỉnh sửa</button>
+            <button class="detail-action-btn icon-only" id="btn-detail-prev" title="Trước"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="detail-action-btn icon-only" id="btn-detail-next" title="Sau"><i class="fa-solid fa-chevron-right"></i></button>
+            <button class="detail-action-btn icon-only" id="btn-detail-expand" title="Mở rộng"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+            <button class="detail-action-btn icon-only" id="btn-detail-close" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <!-- Detail Body Content -->
+        <div class="detail-body" id="detail-body-content">
+          <!-- Dynamic detailed fields and sub-tables -->
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- MODAL CONTAINER -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div id="modal-container" class="modal-content">
+      <!-- Dynamic modal content -->
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

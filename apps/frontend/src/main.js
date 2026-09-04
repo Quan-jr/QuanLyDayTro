@@ -92,18 +92,37 @@ function setupCascadingAddress(container, prefix = '') {
   };
 }
 
-// Modal Helper
+// Record Selection Helper
+function selectRecord(id, renderFn) {
+  state.selectedId = Number(id);
+  masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
+    row.classList.toggle('selected', Number(row.dataset.id) === Number(id));
+  });
+  detailPanel.style.display = 'flex';
+  if (typeof renderFn === 'function') {
+    renderFn();
+  }
+}
+
+// Modal Helper (Right Drawer 1/2 Screen)
 function openModal(title, htmlContent, onConfirm, onRender) {
   modalContainer.innerHTML = `
     <div class="modal-header">
-      <h3>${title}</h3>
-      <button class="modal-close" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-title-group">
+        <h3>${title}</h3>
+        <p class="modal-subtitle">Vui lòng điền thông tin chi tiết vào biểu mẫu bên dưới</p>
+      </div>
+      <button class="modal-close" id="btn-close-modal" title="Đóng biểu mẫu"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <form id="modal-form">
-      ${htmlContent}
+      <div class="modal-body">
+        ${htmlContent}
+      </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" id="btn-cancel-modal">Hủy</button>
-        <button type="submit" class="btn-add-primary">Lưu dữ liệu</button>
+        <button type="button" class="btn-secondary" id="btn-cancel-modal">Hủy bỏ</button>
+        <button type="submit" class="btn-add-primary" id="btn-submit-modal">
+          <i class="fa-solid fa-check"></i> Lưu dữ liệu
+        </button>
       </div>
     </form>
   `;
@@ -114,6 +133,18 @@ function openModal(title, htmlContent, onConfirm, onRender) {
   document.getElementById('btn-close-modal').onclick = close;
   document.getElementById('btn-cancel-modal').onclick = close;
 
+  modalBackdrop.onclick = (e) => {
+    if (e.target === modalBackdrop) close();
+  };
+
+  const handleEsc = (e) => {
+    if (e.key === 'Escape') {
+      close();
+      window.removeEventListener('keydown', handleEsc);
+    }
+  };
+  window.addEventListener('keydown', handleEsc);
+
   if (typeof onRender === 'function') {
     onRender(modalContainer);
   }
@@ -121,6 +152,11 @@ function openModal(title, htmlContent, onConfirm, onRender) {
   const form = document.getElementById('modal-form');
   form.onsubmit = async (e) => {
     e.preventDefault();
+    const btnSubmit = document.getElementById('btn-submit-modal');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
+    }
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
     try {
@@ -128,6 +164,11 @@ function openModal(title, htmlContent, onConfirm, onRender) {
       close();
     } catch (err) {
       showToast(err.message, 'error');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `<i class="fa-solid fa-check"></i> Lưu dữ liệu`;
+      }
     }
   };
 }
@@ -202,8 +243,7 @@ async function loadPhongView() {
 
   masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
     row.onclick = () => {
-      state.selectedId = Number(row.dataset.id);
-      loadPhongView();
+      selectRecord(Number(row.dataset.id), renderPhongDetail);
     };
   });
 
@@ -370,8 +410,7 @@ async function loadHopDongView() {
 
   masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
     row.onclick = () => {
-      state.selectedId = Number(row.dataset.id);
-      loadHopDongView();
+      selectRecord(Number(row.dataset.id), renderHopDongDetail);
     };
   });
 
@@ -543,8 +582,7 @@ async function loadDayTroView() {
 
   masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
     row.onclick = () => {
-      state.selectedId = Number(row.dataset.id);
-      loadDayTroView();
+      selectRecord(Number(row.dataset.id), renderDayTroDetail);
     };
   });
 
@@ -642,8 +680,7 @@ async function loadDienView() {
 
   masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
     row.onclick = () => {
-      state.selectedId = Number(row.dataset.id);
-      loadDienView();
+      selectRecord(Number(row.dataset.id), renderDienDetail);
     };
   });
 
@@ -773,8 +810,7 @@ async function loadHoaDonView() {
 
   masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
     row.onclick = () => {
-      state.selectedId = Number(row.dataset.id);
-      loadHoaDonView();
+      selectRecord(Number(row.dataset.id), renderHoaDonDetail);
     };
   });
 
@@ -933,6 +969,10 @@ async function loadTaiSanView() {
   state.suaChuaList = res.data || [];
   masterItemCount.innerText = state.suaChuaList.length;
 
+  if (state.suaChuaList.length > 0 && !state.selectedId) {
+    state.selectedId = state.suaChuaList[0].id;
+  }
+
   masterTableWrapper.innerHTML = `
     <table class="master-table">
       <thead>
@@ -946,22 +986,67 @@ async function loadTaiSanView() {
         </tr>
       </thead>
       <tbody>
-        ${state.suaChuaList.map(sc => `
-          <tr class="master-row">
-            <td><strong>#NK-${sc.id}</strong></td>
-            <td><strong style="color:var(--primary-blue)">${sc.ten_phong}</strong> <small style="color:var(--text-muted)">(${sc.ten_day_tro})</small></td>
-            <td>${sc.ten_tai_san || 'Cơ sở hạ tầng'}</td>
-            <td><strong class="amount-highlight">${dinhDangTien(sc.gia_sua)}</strong></td>
-            <td>${sc.mo_ta}</td>
-            <td>${dinhDangNgay(sc.ngay_sua)}</td>
-          </tr>
-        `).join('')}
+        ${state.suaChuaList.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted)">Chưa có dữ liệu sửa chữa</td></tr>` : ''}
+        ${state.suaChuaList.map(sc => {
+          const isSelected = sc.id === Number(state.selectedId);
+          return `
+            <tr class="master-row ${isSelected ? 'selected' : ''}" data-id="${sc.id}">
+              <td><strong>#NK-${sc.id}</strong></td>
+              <td><strong style="color:var(--primary-blue)">${sc.ten_phong}</strong> <small style="color:var(--text-muted)">(${sc.ten_day_tro})</small></td>
+              <td>${sc.ten_tai_san || 'Cơ sở hạ tầng'}</td>
+              <td><strong class="amount-highlight">${dinhDangTien(sc.gia_sua)}</strong></td>
+              <td>${sc.mo_ta}</td>
+              <td>${dinhDangNgay(sc.ngay_sua)}</td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
   `;
 
-  detailHeaderId.innerText = 'Nhật Ký Bảo Trì & Sửa Chữa';
-  detailBodyContent.innerHTML = `<div style="color:var(--text-muted); padding:1rem">Quản lý chi phí sửa chữa phòng và tài sản thiết bị.</div>`;
+  masterTableWrapper.querySelectorAll('.master-row').forEach(row => {
+    row.onclick = () => {
+      selectRecord(Number(row.dataset.id), renderTaiSanDetail);
+    };
+  });
+
+  renderTaiSanDetail();
+}
+
+function renderTaiSanDetail() {
+  const sc = state.suaChuaList.find(item => item.id === Number(state.selectedId));
+  if (!sc) return;
+
+  detailHeaderId.innerText = `Sửa chữa: #NK-${sc.id} - ${sc.ten_phong}`;
+
+  detailBodyContent.innerHTML = `
+    <div class="detail-field-group">
+      <div class="detail-row">
+        <span class="detail-label">Mã phiếu sửa</span>
+        <span class="detail-val">#NK-${sc.id}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phòng thực hiện</span>
+        <span class="detail-val link"><strong>${sc.ten_phong}</strong> (${sc.ten_day_tro})</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Hạng mục / Thiết bị</span>
+        <span class="detail-val"><strong>${sc.ten_tai_san || 'Hệ thống hạ tầng'}</strong></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Chi phí sửa chữa</span>
+        <span class="detail-val amount-highlight" style="font-size:1.15rem">${dinhDangTien(sc.gia_sua)} VNĐ</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Ngày thực hiện</span>
+        <span class="detail-val date-blue">${dinhDangNgay(sc.ngay_sua)}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Nội dung chi tiết</span>
+        <span class="detail-val">${sc.mo_ta || '-'}</span>
+      </div>
+    </div>
+  `;
 }
 
 // ==========================================
@@ -1376,6 +1461,9 @@ function switchTab(tabName) {
 async function init() {
   const sidebar = document.getElementById('sidebar');
   const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+  const btnDetailPrev = document.getElementById('btn-detail-prev');
+  const btnDetailNext = document.getElementById('btn-detail-next');
+  const btnDetailExpand = document.getElementById('btn-detail-expand');
 
   if (btnToggleSidebar && sidebar) {
     btnToggleSidebar.onclick = () => {
@@ -1392,6 +1480,55 @@ async function init() {
   btnDetailClose.onclick = () => {
     detailPanel.style.display = detailPanel.style.display === 'none' ? 'flex' : 'none';
   };
+
+  function getActiveListInfo() {
+    switch (state.currentTab) {
+      case 'so-do-phong':
+      case 'phong': return { list: state.phongList, render: renderPhongDetail };
+      case 'hop-dong': return { list: state.hopDongList, render: renderHopDongDetail };
+      case 'day-tro': return { list: state.dayTroList, render: renderDayTroDetail };
+      case 'dien-nuoc': return { list: state.dienList, render: renderDienDetail };
+      case 'hoa-don': return { list: state.hoaDonList, render: renderHoaDonDetail };
+      case 'tai-san-sua-chua': return { list: state.suaChuaList, render: renderTaiSanDetail };
+      default: return { list: state.phongList, render: renderPhongDetail };
+    }
+  }
+
+  function navigateRecord(direction) {
+    const { list, render } = getActiveListInfo();
+    if (!list || list.length === 0) return;
+    const currentIndex = list.findIndex(item => Number(item.id) === Number(state.selectedId));
+    let newIndex = currentIndex + direction;
+    if (newIndex < 0) newIndex = 0;
+    if (newIndex >= list.length) newIndex = list.length - 1;
+    const target = list[newIndex];
+    if (target) {
+      selectRecord(target.id, render);
+      const row = masterTableWrapper.querySelector(`.master-row[data-id="${target.id}"]`);
+      if (row) {
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }
+
+  if (btnDetailPrev) {
+    btnDetailPrev.onclick = () => navigateRecord(-1);
+  }
+
+  if (btnDetailNext) {
+    btnDetailNext.onclick = () => navigateRecord(1);
+  }
+
+  if (btnDetailExpand) {
+    btnDetailExpand.onclick = () => {
+      detailPanel.classList.toggle('expanded');
+      const isExpanded = detailPanel.classList.contains('expanded');
+      btnDetailExpand.innerHTML = isExpanded 
+        ? `<i class="fa-solid fa-down-left-and-up-right-to-center"></i>` 
+        : `<i class="fa-solid fa-up-right-and-down-left-from-center"></i>`;
+      btnDetailExpand.title = isExpanded ? "Thu gọn panel" : "Mở rộng 1 nửa màn hình";
+    };
+  }
 
   try {
     const [dayTroRes, phongRes, hdRes, dienRes, nhanVienRes] = await Promise.all([
